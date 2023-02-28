@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: dllec
+Upstream-Contact: Alexander Zhang <alex@alexyzhang.dev>
+Source: https://github.com/bkrl/dllec
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
