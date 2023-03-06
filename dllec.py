@@ -12,10 +12,11 @@ from yt_dlp.postprocessor.ffmpeg import FFmpegPostProcessor
 from yt_dlp.utils import prepend_extension, replace_extension
 
 
-class FFmpegDoubleSpeedPP(FFmpegPostProcessor):
-    def __init__(self, downloader=None, output_ext="mkv"):
+class FFmpegChangeSpeedPP(FFmpegPostProcessor):
+    def __init__(self, downloader=None, output_ext="mkv", speed=2.0):
         super().__init__(downloader)
         self.output_ext = output_ext
+        self.speed = speed
 
     def run(self, info):
         orig_path = path = info["filepath"]
@@ -25,7 +26,7 @@ class FFmpegDoubleSpeedPP(FFmpegPostProcessor):
             orig_path = prepend_extension(path, "orig")
             temp_path = prepend_extension(path, "temp")
 
-        self.to_screen(f"Doubling speed; Destination: {new_path}")
+        self.to_screen(f"Changing speed to {self.speed}; Destination: {new_path}")
         self.real_run_ffmpeg(
             [(path, ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"])],
             [
@@ -33,9 +34,9 @@ class FFmpegDoubleSpeedPP(FFmpegPostProcessor):
                     temp_path,
                     [
                         "-vf",
-                        "setpts=0.5*PTS",
+                        f"setpts=PTS/{self.speed}",
                         "-af",
-                        "atempo=2",
+                        f"atempo={self.speed}",
                         "-c:v",
                         "vp9_vaapi",
                         "-c:a",
@@ -67,6 +68,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("url")
     parser.add_argument("-o", "--output")
+    parser.add_argument("-s", "--speed", default=2.0, type=float)
     args = parser.parse_args()
 
     ydl_args = {"prefer_free_formats": True}
@@ -78,8 +80,8 @@ if __name__ == "__main__":
 
     with YoutubeDL(ydl_args) as ydl:
         ydl.add_post_processor(
-            FFmpegDoubleSpeedPP(output_ext=output_ext[1:])
+            FFmpegChangeSpeedPP(output_ext=output_ext[1:], speed=args.speed)
             if output_ext is not None
-            else FFmpegDoubleSpeedPP()
+            else FFmpegChangeSpeedPP(speed=args.speed)
         )
         ydl.download([args.url])
