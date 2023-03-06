@@ -13,10 +13,11 @@ from yt_dlp.utils import prepend_extension, replace_extension
 
 
 class FFmpegChangeSpeedPP(FFmpegPostProcessor):
-    def __init__(self, downloader=None, output_ext="mkv", speed=2.0):
+    def __init__(self, downloader=None, output_ext="mkv", speed=2.0, hwaccel="vaapi"):
         super().__init__(downloader)
         self.output_ext = output_ext
         self.speed = speed
+        self.hwaccel = hwaccel
 
     def run(self, info):
         orig_path = path = info["filepath"]
@@ -28,7 +29,12 @@ class FFmpegChangeSpeedPP(FFmpegPostProcessor):
 
         self.to_screen(f"Changing speed to {self.speed}; Destination: {new_path}")
         self.real_run_ffmpeg(
-            [(path, ["-hwaccel", "vaapi", "-hwaccel_output_format", "vaapi"])],
+            [
+                (
+                    path,
+                    ["-hwaccel", self.hwaccel, "-hwaccel_output_format", self.hwaccel],
+                )
+            ],
             [
                 (
                     temp_path,
@@ -38,7 +44,7 @@ class FFmpegChangeSpeedPP(FFmpegPostProcessor):
                         "-af",
                         f"atempo={self.speed}",
                         "-c:v",
-                        "vp9_vaapi",
+                        f"vp9_{self.hwaccel}",
                         "-c:a",
                         "libopus",
                     ],
@@ -69,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("url")
     parser.add_argument("-o", "--output")
     parser.add_argument("-s", "--speed", default=2.0, type=float)
+    parser.add_argument("--hwaccel", default="vaapi")
     args = parser.parse_args()
 
     ydl_args = {"prefer_free_formats": True}
@@ -81,6 +88,8 @@ if __name__ == "__main__":
 
     with YoutubeDL(ydl_args) as ydl:
         ydl.add_post_processor(
-            FFmpegChangeSpeedPP(output_ext=output_ext, speed=args.speed)
+            FFmpegChangeSpeedPP(
+                output_ext=output_ext, speed=args.speed, hwaccel=args.hwaccel
+            )
         )
         ydl.download([args.url])
