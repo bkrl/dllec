@@ -74,14 +74,13 @@ if __name__ == "__main__":
     ydl_args = {"prefer_free_formats": True}
     if args.output is not None:
         output_name, output_ext = os.path.splitext(args.output)
+        output_ext = output_ext[1:]
         ydl_args["outtmpl"] = {"default": output_name + ".%(ext)s"}
     else:
-        output_ext = None
+        output_ext = "mkv"
 
     with YoutubeDL(ydl_args) as ydl:
         ydl.add_post_processor(
-            FFmpegChangeSpeedPP(output_ext=output_ext[1:], speed=args.speed)
-            if output_ext is not None
-            else FFmpegChangeSpeedPP(speed=args.speed)
+            FFmpegChangeSpeedPP(output_ext=output_ext, speed=args.speed)
         )
         ydl.download([args.url])
